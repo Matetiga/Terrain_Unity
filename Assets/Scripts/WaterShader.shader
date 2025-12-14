@@ -90,14 +90,16 @@ Shader "Unlit/WaterShader"
                 float dx = 0.0;
                 float dz = 0.0;
 
-                for(int i = 0; i < 4; i++){
+                for(int i = 1; i <= 4; i++){
                     float2 D = currentDir; 
                     float2 direction = dot(D, worldPos.xz);
 
                     float phase = direction * _WaveFrequency + _Time.y * _WaveSpeed ;
-                    worldPos.y += sin(phase) * _WaveHeight;
+                    float pointyWave = (sin(phase) + 1) / 2;
+                    worldPos.y += pow( pointyWave, i) *2 * _WaveHeight;
 
-                    float derivative = _WaveFrequency * _WaveHeight * cos(phase);
+
+                    float derivative = i * _WaveFrequency * _WaveHeight * pow(pointyWave, i - 1) * cos(phase);
 
                     dx += derivative * D.x;
                     dz += derivative * D.y;
