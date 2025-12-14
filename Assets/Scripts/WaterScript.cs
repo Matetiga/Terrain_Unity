@@ -8,6 +8,10 @@ public class WaterScript : MonoBehaviour
     public int depth = 50;
 
     public Material WaterMaterial;
+    public Transform lightSource;
+    public float waveFrequency;
+    public float waveSpeed;
+    public float waveHeight;
 
 
 
@@ -16,25 +20,12 @@ public class WaterScript : MonoBehaviour
     MeshRenderer meshRenderer;
     Vector3[] vertices;
     int[] triangles;
+    Vector2[] uvs;
 
 
     void Awake()
     {
         mesh = new Mesh();
-        // Mesh Filter hold a reference to the mesh data (contains vertices, uvs, tringles, normals)
-        meshFilter = GetComponent<MeshFilter>();
-        meshFilter.mesh = mesh;
-        if (meshFilter == null) meshFilter = gameObject.AddComponent<MeshFilter>();
-
-        // Mesh Renderer renders the mesh on the screen (it controls materials, shaders, light)
-        meshRenderer = GetComponent<MeshRenderer>();
-        if (meshRenderer == null) meshRenderer = gameObject.AddComponent<MeshRenderer>();
-
-    }
-
-
-    void Start()
-    {
 
         // Both of these work together to show the object in screen
         // MeshFilter          MeshRenderer
@@ -43,21 +34,58 @@ public class WaterScript : MonoBehaviour
         //    ▼                    ▼
         //  MESH    ────────►   MATERIAL   ────────►   SCREEN
         // (shape)             (appearance)           (final image)
-        meshRenderer.sharedMaterial = WaterMaterial;
 
-        StartCoroutine(GenerateWaterSurface(width, depth));
+        // Mesh Filter hold a reference to the mesh data (contains vertices, uvs, tringles, normals)
+        meshFilter = GetComponent<MeshFilter>();
+        if (meshFilter == null) meshFilter = gameObject.AddComponent<MeshFilter>();
+        meshFilter.mesh = mesh;
 
+        // Mesh Renderer renders the mesh on the screen (it controls materials, shaders, light)
+        meshRenderer = GetComponent<MeshRenderer>();
+        if (meshRenderer == null) meshRenderer = gameObject.AddComponent<MeshRenderer>();
+
+        if(WaterMaterial != null) meshRenderer.sharedMaterial = WaterMaterial;
+    }
+
+
+    void Start()
+    {
+
+        GenerateWaterSurface();
+        UpdateMesh();
+
+        meshRenderer.sharedMaterial.SetFloat("_WaveFrequency", waveFrequency);
+        meshRenderer.sharedMaterial.SetFloat("_WaveSpeed", waveSpeed);
+        meshRenderer.sharedMaterial.SetFloat("_WaveHeight", waveHeight);
+
+    }
+
+    void OnValidate()
+    {
+
+        meshRenderer.sharedMaterial.SetFloat("_WaveFrequency", waveFrequency);
+        meshRenderer.sharedMaterial.SetFloat("_WaveSpeed", waveSpeed);
+        meshRenderer.sharedMaterial.SetFloat("_WaveHeight", waveHeight);
     }
     
     void Update(){
+        GenerateWaterSurface();
         UpdateMesh();
+        
+        // Update light direction in shader
+        if(lightSource != null && WaterMaterial != null)
+        {
+            Vector3 lightDir = lightSource.position.normalized;
+            WaterMaterial.SetVector("_LightDirection", lightDir);
+        }
     }
 
     // width and depth will be for the number of quads 
-    IEnumerator GenerateWaterSurface(int width, int depth)
+    void GenerateWaterSurface()
     {
 
         vertices = new Vector3[(width+1) * (depth+1)];
+        uvs = new Vector2[vertices.Length];
         // this will store the vertices per triangle
         int vertexIndex = 0;
         for(int x = 0; x < width +1; x++)
@@ -65,10 +93,10 @@ public class WaterScript : MonoBehaviour
             for(int z = 0; z < depth +1; z++)
             {
                 vertices[vertexIndex] = new Vector3(x, 0, z);
+                uvs[vertexIndex] = new Vector2((float) x / width, (float) z/ depth);
                 vertexIndex++;
             }
         }
-        Debug.Log($"Number of vertex is {vertexIndex}");
 
 
         triangles = new int[width * depth * 6];
@@ -89,12 +117,10 @@ public class WaterScript : MonoBehaviour
 
                 vert++;
                 triangleIndex += 6;
-                yield return new WaitForSeconds(.1f);
             }
             vert++;
         }
 
-        Debug.Log($"Number of triangleIndex is {triangleIndex}");
     }
     
     void UpdateMesh()
@@ -103,19 +129,22 @@ public class WaterScript : MonoBehaviour
 
         mesh.vertices = vertices;
         mesh.triangles = triangles;
+        mesh.uv = uvs;
+
+        // mesh.RecalculateNormals();
 
     }
 
-    private void OnDrawGizmos(){
-        if (vertices == null) return;
+    // private void OnDrawGizmos(){
+    //     if (vertices == null) return;
 
 
-        Gizmos.color = Color.yellow;
-        for(int i = 0; i < vertices.Length; i++){
-            Gizmos.DrawSphere(vertices[i], .1f);
-        }
+    //     Gizmos.color = Color.yellow;
+    //     for(int i = 0; i < vertices.Length; i++){
+    //         Gizmos.DrawSphere(vertices[i], .1f);
+    //     }
 
 
-    }
+    // }
 }
 
