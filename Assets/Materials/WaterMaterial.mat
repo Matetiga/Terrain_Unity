@@ -65,28 +65,30 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 0
     - _DstBlend: 0
-    - _FrequencyDampener: 1.19
+    - _FrequencyDampener: 0.8
     - _GlossMapScale: 1
     - _Glossiness: 0.42
     - _GlossyReflections: 1
-    - _HeightDampener: 0.45
+    - _HeightDampener: 0.75
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
+    - _Specular: 100
     - _SpecularHighlights: 1
     - _SpeedDampener: 0.8
     - _SrcBlend: 1
     - _UVSec: 0
     - _WaveFrequency: 0.3
-    - _WaveHeight: 2
+    - _WaveHeight: 1
+    - _WaveRotation: 1.37
     - _WaveSpeed: 3
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.4862745, g: 0.53708464, b: 0.8666667, a: 1}
+    - _Color: {r: 0.5159141, g: 0.58079165, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _LightDirection: {r: -0.69385123, g: 0.7201184, b: 0, a: 0}
+    - _LightDirection: {r: 0.8614012, g: 0.5071377, b: 0.02827127, a: 0}
     - _WaveDirection: {r: 1, g: 0, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

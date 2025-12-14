@@ -7,13 +7,14 @@ Shader "Unlit/WaterShader"
 
         [Header(Wave Settings)]
         _WaveSpeed("wave Speed", Range(0, 5)) = 1.0
-        _WaveHeight("wave Height", Range(0, 1)) = 0.2
+        _WaveHeight("wave Height", Range(0, 2)) = 0.2
         _WaveFrequency("wave Frequency", Range(0, 2)) = 0.5
         _WaveDirection("Wave Direction", Vector) = (1,0,0,0)
+        _WaveRotation("Wave Rotation", Range(0,6.28)) = 1.25
 
         [Header(Wave Dampeners)]
         _FrequencyDampener("Frequency Dampener", Range(0,5)) = 2.0
-        _HeightDampener("Height Dampener", Range(0,1)) = 0.5
+        _HeightDampener("Height Dampener", Range(0,3)) = 0.5
         _SpeedDampener("Speed Dampener", Range(0,5)) = 1.1
 
         [Header(Lighting)]
@@ -49,6 +50,7 @@ Shader "Unlit/WaterShader"
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
                 float3 worldPos : TEXCOORD2;
+                float3 normal : NORMAL;
             };
 
             sampler2D _MainTex;
@@ -59,6 +61,7 @@ Shader "Unlit/WaterShader"
             float _WaveHeight;
             float _WaveFrequency;
             float4 _WaveDirection;
+            float _WaveRotation;
             
             float _FrequencyDampener;
             float _HeightDampener;
@@ -83,23 +86,36 @@ Shader "Unlit/WaterShader"
                 v2f o;
                 // Store world position
                 float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+                float2 currentDir = normalize(_WaveDirection.xz);
+                float dx = 0.0;
+                float dz = 0.0;
 
                 for(int i = 0; i < 4; i++){
-                    float2 D = normalize(_WaveDirection.xz);
+                    float2 D = currentDir; 
                     float2 direction = dot(D, worldPos.xz);
 
-                    worldPos.y += sin(direction * _WaveFrequency + _Time.y * _WaveSpeed ) * _WaveHeight;
+                    float phase = direction * _WaveFrequency + _Time.y * _WaveSpeed ;
+                    worldPos.y += sin(phase) * _WaveHeight;
+
+                    float derivative = _WaveFrequency * _WaveHeight * cos(phase);
+
+                    dx += derivative * D.x;
+                    dz += derivative * D.y;
+                    
 
                     _WaveFrequency*= _FrequencyDampener;
                     _WaveHeight *= _HeightDampener;
                     _WaveSpeed *= _SpeedDampener;
-                    // _WaveDirection.x += -0.25;
+                    currentDir = rotate(currentDir, _WaveRotation); 
                 }
 
                 o.worldPos = worldPos;
+                // Normal = (d/dx , 1, d/dz) = T x B
+                o.normal = normalize(float3(-dx, 1.0, -dz));
                 
-                // o.vertex = UnityObjectToClipPos(float4(worldPos, 1.0));
                 o.vertex = mul(UNITY_MATRIX_VP, float4(worldPos, 1.0));
+                // o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                // UNITY_TRANSFER_FOG(o,o.vertex);
                 
                 return o; 
             }
@@ -121,34 +137,13 @@ Shader "Unlit/WaterShader"
             {
                 
                 // Partial derivatives
-                float derivative = 0.0;
-                float dWave_dx = 0.0;
-                float dWave_dz = 0.0;
-                float2 D = normalize(_WaveDirection.xz);
-                float direction = dot(D, i.worldPos.xz);
-                for(int n = 0; n < 4; n++){
-                    derivative += _WaveFrequency * _WaveHeight * cos(direction * _WaveFrequency + _Time.y * _WaveSpeed);
-                    dWave_dx += derivative * D.x;
-                    dWave_dz += derivative * D.y;
-
-                    _WaveFrequency*= _FrequencyDampener;
-                    _WaveHeight *= _HeightDampener;
-                    _WaveSpeed *= _SpeedDampener;
-                }
-
-                // y is the up direction
-                // float3 T = float3(0.0,dWave_dz,  1.0);
-                // float3 B = float3(1.0,dWave_dx, 0.0);
-                // recalculate normal
-                // float3 N = normalize(cross(T, B));
-                float3 N = normalize(float3(-dWave_dx, 1.0, -dWave_dz));
                 float lightDir = normalize(_LightDirection.xyz);
                 
                 // saturate to clamp between 0 and 1
                 // clamping is important to avoid negative lighting values which can cause artifacts
-                float NdotL = saturate(dot(N, lightDir)) + 0.2; // ambient term
+                float NdotL = max(0, dot(i.normal, lightDir)); // ambient term
 
-                return _Color * NdotL;
+                return _Color * (NdotL); // basic diffuse lighting with ambient term
                 // return _Color;
             }
             ENDCG
