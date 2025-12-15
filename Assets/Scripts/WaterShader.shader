@@ -18,7 +18,8 @@ Shader "Unlit/WaterShader"
         _SpeedDampener("Speed Dampener", Range(0,5)) = 1.1
 
         [Header(Lighting)]
-        _Specular("Specular", Range(10,300)) = 100
+        _Specular("Specular", Range(10,100)) = 80
+        _SpecularLightPosition("Specular Light Position", Vector) = (50,30,150,0)
         _LightDirection("Light Direction", Vector) = (0,1,0,0)
         
     }
@@ -68,6 +69,7 @@ Shader "Unlit/WaterShader"
             float _SpeedDampener;
 
             float _Specular;
+            float4 _SpecularLightPosition;
             float4 _LightDirection;
 
 
@@ -135,17 +137,30 @@ Shader "Unlit/WaterShader"
             // Normal N = T x B
             // N has to be normalized after the cross product
             // then : N * L = |N|*|L|cos(θ) ------ L being the direction to the light source (also normalized)
+
+
+            // Specular light 
+            // Done by getting the light direction V and its reflection vector L on the surface
+            // H = (L + V) / |L + V|  -------------- H is the halfway vector
+            // The halfway Vector H is the vector located between the light direction and the view direction
+            // The more the normal aligns with the halfway vector the more intense the specular highlight will be
+            // Specular = (N . H)^shininess 
             fixed4 frag (v2f i) : SV_Target
             {
-                
-                // Partial derivatives
                 float lightDir = normalize(_LightDirection.xyz);
                 
+
+                float3 specDir = normalize(_SpecularLightPosition.xyz - i.worldPos);
+                float3 viewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
+                float3 halfwayVec = normalize(specDir + viewDir); // because the vectors are normalized already, then no division
+                float specAngle = max(dot(i.normal, halfwayVec), 0.0);
+                float specular = pow(specAngle, _Specular);
+
                 // saturate to clamp between 0 and 1
                 // clamping is important to avoid negative lighting values which can cause artifacts
-                float NdotL = max(0, dot(i.normal, lightDir)); // ambient term
+                float NdotL = saturate(dot(i.normal, lightDir)); // ambient term
 
-                return _Color * (NdotL); // basic diffuse lighting with ambient term
+                return _Color * (NdotL * 0.9 + 0.1) + specular; // basic diffuse lighting with ambient term
                 // return _Color;
             }
             ENDCG
