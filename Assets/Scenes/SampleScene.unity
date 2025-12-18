@@ -548,9 +548,10 @@ MonoBehaviour:
   depth: 100
   WaterMaterial: {fileID: 2100000, guid: e575c476aeaafcd36bffbcf4dcca2eab, type: 2}
   lightSource: {fileID: 1116428747}
-  waveFrequency: 0.3
+  waveFrequency: 0.15
   waveSpeed: 3
   waveHeight: 1
+  waterResolution: 2
 --- !u!4 &1917757153
 Transform:
   m_ObjectHideFlags: 0

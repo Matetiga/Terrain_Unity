@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 
 public class WaterScript : MonoBehaviour
@@ -12,7 +13,7 @@ public class WaterScript : MonoBehaviour
     public float waveFrequency;
     public float waveSpeed;
     public float waveHeight;
-
+    public int waterResolution = 2;
 
 
     Mesh mesh;
@@ -80,40 +81,43 @@ public class WaterScript : MonoBehaviour
         }
     }
 
-    // width and depth will be for the number of quads 
     void GenerateWaterSurface()
     {
 
-        vertices = new Vector3[(width+1) * (depth+1)];
+        // width and depth will be for the number of quads 
+        int widthResolution  = width * waterResolution; 
+        int depthResolution = depth * waterResolution;
+
+        vertices = new Vector3[(widthResolution +1 )* (depthResolution + 1)];
         uvs = new Vector2[vertices.Length];
         // this will store the vertices per triangle
         int vertexIndex = 0;
-        for(int x = 0; x < width +1; x++)
+        for(int x = 0; x < widthResolution + 1; x++)
         {
-            for(int z = 0; z < depth +1; z++)
+            for(int z = 0; z < depthResolution + 1; z++)
             {
-                vertices[vertexIndex] = new Vector3(x, 0, z);
-                uvs[vertexIndex] = new Vector2((float) x / width, (float) z/ depth);
+                vertices[vertexIndex] = new Vector3((float) x / waterResolution, 0,  (float) z/waterResolution);
+                // uvs[vertexIndex] = new Vector2((float) x / width, (float) z/ depth);
                 vertexIndex++;
             }
         }
 
 
-        triangles = new int[width * depth * 6];
+        triangles = new int[width * depth * 6 * waterResolution * waterResolution];
         int triangleIndex = 0;
         int vert = 0;
-        for(int z = 0; z < depth; z++)
+        for(int z = 0; z < depthResolution; z++)
         {
-            for(int x = 0; x < width; x++)
+            for(int x = 0; x < widthResolution; x++)
             {
 
                 triangles[triangleIndex + 0] = vert;
                 triangles[triangleIndex + 1] = vert + 1;
-                triangles[triangleIndex + 2] = vert + width +1;
+                triangles[triangleIndex + 2] = vert + widthResolution+1;
 
                 triangles[triangleIndex + 3] = vert +1;
-                triangles[triangleIndex + 4] = vert + width+ 2;
-                triangles[triangleIndex + 5] = vert + width+ 1;
+                triangles[triangleIndex + 4] = vert + widthResolution + 2;
+                triangles[triangleIndex + 5] = vert + widthResolution + 1;
 
                 vert++;
                 triangleIndex += 6;

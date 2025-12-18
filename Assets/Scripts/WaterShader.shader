@@ -11,6 +11,7 @@ Shader "Unlit/WaterShader"
         _WaveFrequency("wave Frequency", Range(0, 2)) = 0.5
         _WaveDirection("Wave Direction", Vector) = (1,0,0,0)
         _WaveRotation("Wave Rotation", Range(0,6.28)) = 1.25
+        _WaveNumber("Number of Waves", Range(1,50)) = 4
 
         [Header(Wave Dampeners)]
         _FrequencyDampener("Frequency Dampener", Range(0,5)) = 2.0
@@ -19,6 +20,7 @@ Shader "Unlit/WaterShader"
 
         [Header(Lighting)]
         _Specular("Specular", Range(10,100)) = 80
+        _SpecularLightColor("Specular Light Color", Vector) = (1.0, 1.0 , 0.0, 1.0)
         _SpecularLightPosition("Specular Light Position", Vector) = (50,30,150,0)
         _LightDirection("Light Direction", Vector) = (0,1,0,0)
         
@@ -63,12 +65,14 @@ Shader "Unlit/WaterShader"
             float _WaveFrequency;
             float4 _WaveDirection;
             float _WaveRotation;
+            int _WaveNumber;
             
             float _FrequencyDampener;
             float _HeightDampener;
             float _SpeedDampener;
 
             float _Specular;
+            float4 _SpecularLightColor;
             float4 _SpecularLightPosition;
             float4 _LightDirection;
 
@@ -88,12 +92,12 @@ Shader "Unlit/WaterShader"
                 v2f o;
                 // Store world position
                 float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-                float2 currentDir = normalize(_WaveDirection.xz);
+                float2 currentDir = _WaveDirection.xz;
                 float dx = 0.0;
                 float dz = 0.0;
 
-                for(int i = 1; i <= 4; i++){
-                    float2 D = currentDir; 
+                for(int i = 1; i <= _WaveNumber; i++){
+                    float2 D = normalize(currentDir); 
                     float2 direction = dot(D, worldPos.xz);
 
                     float phase = direction * _WaveFrequency + _Time.y * _WaveSpeed ;
@@ -104,7 +108,6 @@ Shader "Unlit/WaterShader"
 
                     dx += derivative * D.x;
                     dz += derivative * D.y;
-                    
 
                     _WaveFrequency*= _FrequencyDampener;
                     _WaveHeight *= _HeightDampener;
@@ -159,7 +162,7 @@ Shader "Unlit/WaterShader"
                 // clamping is important to avoid negative lighting values which can cause artifacts
                 float NdotL = saturate(dot(i.normal, lightDir)); // ambient term
 
-                return _Color * (NdotL * 0.9 + 0.1) + specular; // basic diffuse lighting with ambient term
+                return _Color * (NdotL * 0.9 + 0.1) + specular * _SpecularLightColor ; // basic diffuse lighting with ambient term
                 // return _Color;
             }
             ENDCG
