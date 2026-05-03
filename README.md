@@ -8,6 +8,7 @@ Using various mathematic techniques to generate the feeling of water surface
 - $e^{sin(x \cdot w + t \cdot \phi)-1}$
 - this function gives a more natural feeling of waves because of the sharper edges
 - Unlike the regular sum of Sines (which have bulkier edges)
+- With each octave, the wave is rotated to give a more natural feeling
 
 #### Lighting Techniques 
 - With help of calculus we can calculate more precisely the normals, rather than with a neighbor approximation 
@@ -20,4 +21,7 @@ Using various mathematic techniques to generate the feeling of water surface
     - Binormal $B= (0, \frac{d}{dz}, 1)$
     - Normal $N = B \times T$ 
     - (taking into consideration the y-Component is the up direction in unity)
-- ...
+- Specular light is calculated with the dot product between the normal and the halfvector
+
+## Demonstration
+![Water Body](images/Water.png)
