@@ -24,9 +24,36 @@ public class WaterScript : MonoBehaviour
     Vector2[] uvs;
 
 
+    void EnsureComponents()
+    {
+        if (mesh == null)
+        {
+            mesh = new Mesh();
+        }
+
+        if (meshFilter == null)
+        {
+            meshFilter = GetComponent<MeshFilter>();
+            if (meshFilter == null) meshFilter = gameObject.AddComponent<MeshFilter>();
+            meshFilter.mesh = mesh;
+        }
+
+        if (meshRenderer == null)
+        {
+            meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer == null) meshRenderer = gameObject.AddComponent<MeshRenderer>();
+        }
+
+        if (WaterMaterial != null && meshRenderer != null)
+        {
+            meshRenderer.sharedMaterial = WaterMaterial;
+        }
+    }
+
+
     void Awake()
     {
-        mesh = new Mesh();
+        EnsureComponents();
 
         // Both of these work together to show the object in screen
         // MeshFilter          MeshRenderer
@@ -45,15 +72,20 @@ public class WaterScript : MonoBehaviour
         meshRenderer = GetComponent<MeshRenderer>();
         if (meshRenderer == null) meshRenderer = gameObject.AddComponent<MeshRenderer>();
 
-        if(WaterMaterial != null) meshRenderer.sharedMaterial = WaterMaterial;
     }
 
 
     void Start()
     {
+        EnsureComponents();
 
         GenerateWaterSurface();
         UpdateMesh();
+
+        if (meshRenderer == null || meshRenderer.sharedMaterial == null)
+        {
+            return;
+        }
 
         meshRenderer.sharedMaterial.SetFloat("_WaveFrequency", waveFrequency);
         meshRenderer.sharedMaterial.SetFloat("_WaveSpeed", waveSpeed);
@@ -63,6 +95,12 @@ public class WaterScript : MonoBehaviour
 
     void OnValidate()
     {
+        EnsureComponents();
+
+        if (meshRenderer == null || meshRenderer.sharedMaterial == null)
+        {
+            return;
+        }
 
         meshRenderer.sharedMaterial.SetFloat("_WaveFrequency", waveFrequency);
         meshRenderer.sharedMaterial.SetFloat("_WaveSpeed", waveSpeed);
